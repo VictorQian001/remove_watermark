@@ -1,3 +1,7 @@
+# remove_watermark
+
+Remove watermark for AIGC images.
+
 # 去水印工具
 
 这是一个基于 OpenCV 的命令行去水印脚本，支持两种模式：
