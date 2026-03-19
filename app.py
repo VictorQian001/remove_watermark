@@ -136,6 +136,9 @@ def run_app(
     ocr_min_score: float,
     ocr_box_padding: int,
     text_match_mode: str,
+    flat_bg_mode: bool,
+    flat_bg_blur: int,
+    flat_bg_strength: float,
 ):
     image, final_mask = build_final_mask(
         editor_value=editor_value,
@@ -150,7 +153,13 @@ def run_app(
     )
 
     try:
-        result = run_lama_inpainting(image, final_mask)
+        result = run_lama_inpainting(
+            image,
+            final_mask,
+            flat_bg_mode=flat_bg_mode,
+            flat_bg_blur=flat_bg_blur,
+            flat_bg_strength=flat_bg_strength,
+        )
     except RuntimeError as exc:
         raise gr.Error(str(exc)) from exc
     return final_mask, result
@@ -191,6 +200,10 @@ def build_demo() -> gr.Blocks:
             threshold = gr.Slider(0, 255, value=32, step=1, label="二值阈值")
             ocr_min_score = gr.Slider(0.0, 1.0, value=0.5, step=0.05, label="OCR 最低置信度")
             ocr_box_padding = gr.Slider(0, 48, value=10, step=1, label="OCR 外框补边")
+        with gr.Row():
+            flat_bg_mode = gr.Checkbox(value=False, label="纯色背景模式")
+            flat_bg_blur = gr.Slider(0, 64, value=24, step=1, label="纯色背景平滑半径")
+            flat_bg_strength = gr.Slider(0.0, 1.0, value=0.8, step=0.05, label="纯色背景平滑强度")
         text_match_mode = gr.Dropdown(
             choices=["contains", "exact"],
             value="contains",
@@ -212,7 +225,20 @@ def build_demo() -> gr.Blocks:
         )
         run_button.click(
             fn=run_app,
-            inputs=[editor, target_text, roi_text, expand, feather, threshold, ocr_min_score, ocr_box_padding, text_match_mode],
+            inputs=[
+                editor,
+                target_text,
+                roi_text,
+                expand,
+                feather,
+                threshold,
+                ocr_min_score,
+                ocr_box_padding,
+                text_match_mode,
+                flat_bg_mode,
+                flat_bg_blur,
+                flat_bg_strength,
+            ],
             outputs=[preview_mask_image_output, output_image],
         )
 

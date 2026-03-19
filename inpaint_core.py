@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+import numpy as np
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 try:
@@ -74,6 +75,13 @@ def _expand_mask(mask: Image.Image, expand: int) -> Image.Image:
     if expand <= 0:
         return mask
     return mask.filter(ImageFilter.MaxFilter(size=_odd_size(expand * 2 + 1)))
+
+
+def _scale_mask(mask: Image.Image, factor: float) -> Image.Image:
+    factor = max(0.0, min(1.0, float(factor)))
+    if factor >= 1.0:
+        return mask.convert("L")
+    return mask.convert("L").point(lambda value: int(round(value * factor)))
 
 
 def build_mask_from_rois(
@@ -377,7 +385,33 @@ def get_lama_model():
     return SimpleLama()
 
 
-def run_lama_inpainting(image: Image.Image, mask: Image.Image) -> Image.Image:
+def _apply_flat_background_smoothing(
+    image: Image.Image,
+    mask: Image.Image,
+    blur_radius: int,
+    strength: float,
+) -> Image.Image:
+    if blur_radius <= 0 or strength <= 0:
+        return image
+
+    grayscale_mask = mask.convert("L")
+    if grayscale_mask.getbbox() is None:
+        return image
+
+    smoothed = image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+    blend_mask = _expand_mask(grayscale_mask, max(2, blur_radius // 3))
+    blend_mask = blend_mask.filter(ImageFilter.GaussianBlur(radius=max(1, blur_radius // 2)))
+    blend_mask = _scale_mask(blend_mask, strength)
+    return Image.composite(smoothed, image, blend_mask)
+
+
+def run_lama_inpainting(
+    image: Image.Image,
+    mask: Image.Image,
+    flat_bg_mode: bool = False,
+    flat_bg_blur: int = 24,
+    flat_bg_strength: float = 0.8,
+) -> Image.Image:
     alpha = image.getchannel("A") if "A" in image.getbands() else None
     rgb_image = image.convert("RGB")
     grayscale_mask = mask.convert("L")
@@ -397,6 +431,18 @@ def run_lama_inpainting(image: Image.Image, mask: Image.Image) -> Image.Image:
     crop_image = rgb_image.crop(crop_box)
     crop_mask = grayscale_mask.crop(crop_box)
     crop_result = get_lama_model()(crop_image, crop_mask)
+    if isinstance(crop_result, np.ndarray):
+        crop_result = Image.fromarray(crop_result)
+    if crop_result.size != crop_mask.size:
+        crop_result = crop_result.resize(crop_mask.size, Image.Resampling.LANCZOS)
+    crop_result = crop_result.convert("RGB")
+    if flat_bg_mode:
+        crop_result = _apply_flat_background_smoothing(
+            image=crop_result,
+            mask=crop_mask,
+            blur_radius=flat_bg_blur,
+            strength=flat_bg_strength,
+        )
 
     result = rgb_image.copy()
     result.paste(crop_result, crop_box[:2])

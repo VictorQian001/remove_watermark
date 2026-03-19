@@ -100,6 +100,23 @@ def parse_args() -> argparse.Namespace:
         help="掩码二值化阈值，默认 32，范围 0-255。",
     )
     parser.add_argument(
+        "--flat-bg-mode",
+        action="store_true",
+        help="纯色背景模式：对修复区域附近做局部颜色平滑，进一步压低浅灰残边。",
+    )
+    parser.add_argument(
+        "--flat-bg-blur",
+        type=int,
+        default=24,
+        help="纯色背景模式下的平滑半径，默认 24。",
+    )
+    parser.add_argument(
+        "--flat-bg-strength",
+        type=float,
+        default=0.8,
+        help="纯色背景模式下的平滑强度，默认 0.8，范围 0-1。",
+    )
+    parser.add_argument(
         "--invert-mask",
         action="store_true",
         help="如果传入的掩码黑白含义相反，可打开此选项。",
@@ -183,7 +200,13 @@ def process_single_image(
         raise SystemExit("最终掩码为空，没有可修复区域。")
 
     try:
-        result = run_lama_inpainting(image, final_mask)
+        result = run_lama_inpainting(
+            image,
+            final_mask,
+            flat_bg_mode=args.flat_bg_mode,
+            flat_bg_blur=args.flat_bg_blur,
+            flat_bg_strength=args.flat_bg_strength,
+        )
     except RuntimeError as exc:
         raise SystemExit(str(exc)) from exc
 
@@ -211,6 +234,10 @@ def main() -> None:
         raise SystemExit("--ocr-min-score 必须在 0 到 1 之间。")
     if args.ocr_box_padding < 0:
         raise SystemExit("--ocr-box-padding 不能小于 0。")
+    if args.flat_bg_blur < 0:
+        raise SystemExit("--flat-bg-blur 不能小于 0。")
+    if not 0.0 <= args.flat_bg_strength <= 1.0:
+        raise SystemExit("--flat-bg-strength 必须在 0 到 1 之间。")
     if not args.mask and not args.roi and not args.target_text:
         raise SystemExit("至少要提供 --mask、--roi 或 --target-text 其中之一。")
 

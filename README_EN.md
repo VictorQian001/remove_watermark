@@ -124,6 +124,9 @@ Notes:
 - `--text-match-mode`: `contains` or `exact`
 - `--ocr-min-score`: minimum OCR confidence, default `0.5`
 - `--ocr-box-padding`: extra padding outside matched OCR text boxes, useful for outer glow / gray halos
+- `--flat-bg-mode`: flat background mode for local color smoothing near the repaired area
+- `--flat-bg-blur`: smoothing radius for flat background mode, default `24`
+- `--flat-bg-strength`: smoothing strength for flat background mode, default `0.8`
 - `--ocr-preview`: export OCR box preview images; matched boxes are red, other OCR boxes are blue
 - `--mask-output`: save the final mask sent into LaMa
 - `--expand`: expand mask edges, default `12`
@@ -145,6 +148,7 @@ In the browser you can:
 - enter target watermark text for OCR-based matching
 - paint white mask strokes directly on the image
 - add ROI values
+- enable flat background mode to suppress faint gray halos further
 - preview the final mask before running AI inpainting
 
 ## Tuning Tips
@@ -155,7 +159,8 @@ Tune in this order:
 
 - increase `--ocr-box-padding` first
 - then increase `--expand`
-- if needed, raise `--feather` slightly
+- if needed, enable `--flat-bg-mode`
+- then fine-tune `--flat-bg-blur` and `--flat-bg-strength`
 
 For watermarks like `豆包AI生成` with white text plus a soft gray glow, start with:
 
@@ -166,7 +171,10 @@ python cli.py \
   --target-text "豆包AI生成" \
   --ocr-box-padding 16 \
   --expand 14 \
-  --feather 4
+  --feather 4 \
+  --flat-bg-mode \
+  --flat-bg-blur 24 \
+  --flat-bg-strength 0.8
 ```
 
 ## Sample Assets

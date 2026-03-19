@@ -124,6 +124,9 @@ python cli.py \
 - `--text-match-mode`：`contains` 或 `exact`
 - `--ocr-min-score`：OCR 最低置信度，默认 `0.5`
 - `--ocr-box-padding`：OCR 命中文字框外围额外补的像素，适合去掉文字外发光/灰边
+- `--flat-bg-mode`：纯色背景模式，对修复区域附近做局部颜色平滑
+- `--flat-bg-blur`：纯色背景模式下的平滑半径，默认 `24`
+- `--flat-bg-strength`：纯色背景模式下的平滑强度，默认 `0.8`
 - `--ocr-preview`：导出 OCR 检测框预览图；匹配框为红色，其他 OCR 框为蓝色
 - `--mask-output`：保存最终送入 AI 的掩码
 - `--expand`：掩码外扩像素，默认 `12`
@@ -145,6 +148,7 @@ python app.py
 - 输入目标水印文字，让 OCR 自动找框
 - 直接在图上刷白色掩码
 - 补充填写 ROI
+- 开启“纯色背景模式”继续压浅灰残边
 - 先预览最终掩码，再执行 AI 修复
 
 ## 调参建议
@@ -153,7 +157,8 @@ python app.py
 
 - 先增大 `--ocr-box-padding`
 - 再增大 `--expand`
-- 还不够的话，再把 `--feather` 提高一点
+- 还不够的话，再打开 `--flat-bg-mode`
+- 最后再微调 `--flat-bg-blur` 和 `--flat-bg-strength`
 
 针对类似 `豆包AI生成` 这种白字 + 灰色外发光，建议先试：
 
@@ -164,7 +169,10 @@ python cli.py \
   --target-text "豆包AI生成" \
   --ocr-box-padding 16 \
   --expand 14 \
-  --feather 4
+  --feather 4 \
+  --flat-bg-mode \
+  --flat-bg-blur 24 \
+  --flat-bg-strength 0.8
 ```
 
 ## 示例素材
