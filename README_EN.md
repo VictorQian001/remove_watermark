@@ -3,6 +3,7 @@
 # Corner Overlay Cleanup Tool
 
 This tool is intended for cleaning up corner text, logos, or other overlays in images you own or are authorized to edit.
+It works best on solid-color, gradient, or near-smooth background areas.
 
 ![Before and after](./assets/before_after_case3.png)
 
@@ -58,12 +59,12 @@ Corner overlay cleanup:
 
 ```bash
 python3 remove_watermark.py \
-  -i ./examples/in.jpg \
-  -o ./examples/out.jpg \
+  -i ./people.png \
+  -o ./people_clean.png \
   -m 1 \
   --corner bottom-right \
-  --roi 1100,520,420,220 \
-  --mask-output ./examples/mask.jpg
+  --roi 2350,1300,320,130 \
+  --mask-output ./people_mask.png
 ```
 
 Repeated overlay cleanup:
@@ -82,6 +83,7 @@ python3 remove_watermark.py \
 - `mode=2` searches the full image for repeated light overlays or textures.
 - If auto-detection is unstable, provide `--roi x,y,w,h` to constrain the target area.
 - Use `--mask-output` first when tuning parameters, then adjust `--strength`.
+- The current workflow is best suited to solid-color, gradient, or near-smooth background areas; results on highly textured backgrounds may be less stable.
 
 ## Compliance
 

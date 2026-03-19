@@ -3,6 +3,7 @@
 # 图片角落覆盖层清理工具
 
 用于清理你自有图片中的角落文字、Logo 或其他覆盖层标记。
+更适合纯色、渐变色或接近平滑的背景区域。
 
 ![前后对比](./assets/before_after_case3.png)
 
@@ -58,12 +59,12 @@ remove_print/
 
 ```bash
 python3 remove_watermark.py \
-  -i ./examples/in.jpg \
-  -o ./examples/out.jpg \
+  -i ./people.png \
+  -o ./people_clean.png \
   -m 1 \
   --corner bottom-right \
-  --roi 1100,520,420,220 \
-  --mask-output ./examples/mask.jpg
+  --roi 2350,1300,320,130 \
+  --mask-output ./people_mask.png
 ```
 
 全图重复覆盖层清理：
@@ -82,6 +83,7 @@ python3 remove_watermark.py \
 - `mode=2` 会在全图查找重复出现的浅色纹理或覆盖层，更适合整张图里重复分布的干扰元素。
 - 自动识别不稳时，优先直接给 `--roi x,y,w,h`，这样掩码只会在该矩形内扩张。
 - 建议先用 `--mask-output` 检查掩码是否覆盖完整，再调整 `--strength`。
+- 当前工具更适合纯色、渐变色或接近平滑的背景区域；在复杂纹理背景上，结果可能不稳定。
 
 ## 合规使用
 
