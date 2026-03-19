@@ -36,6 +36,7 @@ def build_final_mask(
     feather: int,
     threshold: int,
     ocr_min_score: float,
+    ocr_box_padding: int,
     text_match_mode: str,
 ):
     try:
@@ -55,7 +56,7 @@ def build_final_mask(
     target_texts = parse_target_texts([target_text]) if target_text.strip() else []
     if target_texts:
         try:
-            text_mask, matches, recognized_texts = build_mask_from_target_text(
+            text_mask, detections = build_mask_from_target_text(
                 image=image,
                 target_texts=target_texts,
                 expand=expand,
@@ -63,10 +64,12 @@ def build_final_mask(
                 threshold=threshold,
                 min_score=ocr_min_score,
                 match_mode=text_match_mode,
+                box_padding=ocr_box_padding,
             )
         except RuntimeError as exc:
             raise gr.Error(str(exc)) from exc
         if text_mask is None:
+            recognized_texts = [detection.text for detection in detections]
             recognized_summary = "、".join(recognized_texts[:12]) if recognized_texts else "无"
             raise gr.Error(
                 f"OCR 没有匹配到目标文字: {', '.join(target_texts)}。当前识别到的文字: {recognized_summary}"
@@ -106,6 +109,7 @@ def preview_mask_image(
     feather: int,
     threshold: int,
     ocr_min_score: float,
+    ocr_box_padding: int,
     text_match_mode: str,
 ):
     _, final_mask = build_final_mask(
@@ -116,6 +120,7 @@ def preview_mask_image(
         feather=feather,
         threshold=threshold,
         ocr_min_score=ocr_min_score,
+        ocr_box_padding=ocr_box_padding,
         text_match_mode=text_match_mode,
     )
     return final_mask
@@ -129,6 +134,7 @@ def run_app(
     feather: int,
     threshold: int,
     ocr_min_score: float,
+    ocr_box_padding: int,
     text_match_mode: str,
 ):
     image, final_mask = build_final_mask(
@@ -139,6 +145,7 @@ def run_app(
         feather=feather,
         threshold=threshold,
         ocr_min_score=ocr_min_score,
+        ocr_box_padding=ocr_box_padding,
         text_match_mode=text_match_mode,
     )
 
@@ -183,6 +190,7 @@ def build_demo() -> gr.Blocks:
             feather = gr.Slider(0, 32, value=6, step=1, label="边缘放宽")
             threshold = gr.Slider(0, 255, value=32, step=1, label="二值阈值")
             ocr_min_score = gr.Slider(0.0, 1.0, value=0.5, step=0.05, label="OCR 最低置信度")
+            ocr_box_padding = gr.Slider(0, 48, value=10, step=1, label="OCR 外框补边")
         text_match_mode = gr.Dropdown(
             choices=["contains", "exact"],
             value="contains",
@@ -199,12 +207,12 @@ def build_demo() -> gr.Blocks:
 
         preview_button.click(
             fn=preview_mask_image,
-            inputs=[editor, target_text, roi_text, expand, feather, threshold, ocr_min_score, text_match_mode],
+            inputs=[editor, target_text, roi_text, expand, feather, threshold, ocr_min_score, ocr_box_padding, text_match_mode],
             outputs=[preview_mask_image_output],
         )
         run_button.click(
             fn=run_app,
-            inputs=[editor, target_text, roi_text, expand, feather, threshold, ocr_min_score, text_match_mode],
+            inputs=[editor, target_text, roi_text, expand, feather, threshold, ocr_min_score, ocr_box_padding, text_match_mode],
             outputs=[preview_mask_image_output, output_image],
         )
 

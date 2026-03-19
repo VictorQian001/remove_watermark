@@ -123,6 +123,7 @@ Notes:
 - `--target-text`: watermark text to remove; OCR finds boxes first
 - `--text-match-mode`: `contains` or `exact`
 - `--ocr-min-score`: minimum OCR confidence, default `0.5`
+- `--ocr-box-padding`: extra padding outside matched OCR text boxes, useful for outer glow / gray halos
 - `--ocr-preview`: export OCR box preview images; matched boxes are red, other OCR boxes are blue
 - `--mask-output`: save the final mask sent into LaMa
 - `--expand`: expand mask edges, default `12`
@@ -145,6 +146,28 @@ In the browser you can:
 - paint white mask strokes directly on the image
 - add ROI values
 - preview the final mask before running AI inpainting
+
+## Tuning Tips
+
+If the background is flat or nearly flat and you still see a gray halo after the text is removed, the usual cause is not LaMa itself. The more common issue is that the watermark's semi-transparent glow or shadow is outside the mask.
+
+Tune in this order:
+
+- increase `--ocr-box-padding` first
+- then increase `--expand`
+- if needed, raise `--feather` slightly
+
+For watermarks like `豆包AI生成` with white text plus a soft gray glow, start with:
+
+```bash
+python cli.py \
+  -i ./assets/avatar1.png \
+  -o ./outputs/avatar1_clean.png \
+  --target-text "豆包AI生成" \
+  --ocr-box-padding 16 \
+  --expand 14 \
+  --feather 4
+```
 
 ## Sample Assets
 

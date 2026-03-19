@@ -76,6 +76,12 @@ def parse_args() -> argparse.Namespace:
         help="OCR 最低置信度，默认 0.5。",
     )
     parser.add_argument(
+        "--ocr-box-padding",
+        type=int,
+        default=10,
+        help="OCR 命中文字框外围额外补的像素，适合去掉文字外发光/灰边，默认 10。",
+    )
+    parser.add_argument(
         "--expand",
         type=int,
         default=12,
@@ -135,6 +141,7 @@ def process_single_image(
                 threshold=args.mask_threshold,
                 min_score=args.ocr_min_score,
                 match_mode=args.text_match_mode,
+                box_padding=args.ocr_box_padding,
             )
         except RuntimeError as exc:
             raise SystemExit(str(exc)) from exc
@@ -202,6 +209,8 @@ def main() -> None:
         raise SystemExit("--mask-threshold 必须在 0 到 255 之间。")
     if not 0.0 <= args.ocr_min_score <= 1.0:
         raise SystemExit("--ocr-min-score 必须在 0 到 1 之间。")
+    if args.ocr_box_padding < 0:
+        raise SystemExit("--ocr-box-padding 不能小于 0。")
     if not args.mask and not args.roi and not args.target_text:
         raise SystemExit("至少要提供 --mask、--roi 或 --target-text 其中之一。")
 

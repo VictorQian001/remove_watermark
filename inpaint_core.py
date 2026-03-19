@@ -110,6 +110,47 @@ def build_mask_from_polygons(
     return _normalize_mask(mask, feather=feather, threshold=threshold)
 
 
+def _polygon_bounds(polygon: Iterable[tuple[float, float]]) -> tuple[float, float, float, float]:
+    points = list(polygon)
+    xs = [point[0] for point in points]
+    ys = [point[1] for point in points]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def build_mask_from_detection_boxes(
+    size: tuple[int, int],
+    detections: Iterable[OCRDetection],
+    box_padding: int,
+    expand: int,
+    feather: int,
+    threshold: int,
+) -> Image.Image | None:
+    rectangles: list[tuple[int, int, int, int]] = []
+    width, height = size
+
+    for detection in detections:
+        left, top, right, bottom = _polygon_bounds(detection.polygon)
+        rectangles.append(
+            (
+                max(0, int(left) - box_padding),
+                max(0, int(top) - box_padding),
+                min(width, int(right) + box_padding),
+                min(height, int(bottom) + box_padding),
+            )
+        )
+
+    if not rectangles:
+        return None
+
+    mask = Image.new("L", size, 0)
+    draw = ImageDraw.Draw(mask)
+    for left, top, right, bottom in rectangles:
+        draw.rectangle((left, top, right, bottom), fill=255)
+
+    mask = _expand_mask(mask, expand)
+    return _normalize_mask(mask, feather=feather, threshold=threshold)
+
+
 def render_ocr_preview(image: Image.Image, detections: Iterable[OCRDetection]) -> Image.Image:
     preview = image.convert("RGB").copy()
     draw = ImageDraw.Draw(preview, "RGBA")
@@ -293,6 +334,7 @@ def build_mask_from_target_text(
     threshold: int,
     min_score: float,
     match_mode: str,
+    box_padding: int,
 ) -> tuple[Image.Image | None, list[OCRDetection]]:
     detections = find_text_matches(
         image=image,
@@ -304,14 +346,26 @@ def build_mask_from_target_text(
     if not matches:
         return None, detections
 
-    mask = build_mask_from_polygons(
+    polygon_mask = build_mask_from_polygons(
         size=image.size,
         polygons=[match.polygon for match in matches],
         expand=expand,
         feather=feather,
         threshold=threshold,
     )
-    return mask, detections
+    masks = [polygon_mask]
+    if box_padding > 0:
+        box_mask = build_mask_from_detection_boxes(
+            size=image.size,
+            detections=matches,
+            box_padding=box_padding,
+            expand=expand,
+            feather=feather,
+            threshold=threshold,
+        )
+        if box_mask is not None:
+            masks.append(box_mask)
+    return merge_masks(masks, image.size), detections
 
 
 @lru_cache(maxsize=1)

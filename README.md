@@ -123,6 +123,7 @@ python cli.py \
 - `--target-text`：要去除的文字，先 OCR 找框再修复
 - `--text-match-mode`：`contains` 或 `exact`
 - `--ocr-min-score`：OCR 最低置信度，默认 `0.5`
+- `--ocr-box-padding`：OCR 命中文字框外围额外补的像素，适合去掉文字外发光/灰边
 - `--ocr-preview`：导出 OCR 检测框预览图；匹配框为红色，其他 OCR 框为蓝色
 - `--mask-output`：保存最终送入 AI 的掩码
 - `--expand`：掩码外扩像素，默认 `12`
@@ -145,6 +146,26 @@ python app.py
 - 直接在图上刷白色掩码
 - 补充填写 ROI
 - 先预览最终掩码，再执行 AI 修复
+
+## 调参建议
+
+如果是纯色或接近纯色的背景，去掉文字后还残留一圈灰边，通常不是 LaMa 本身的问题，而是水印外面的半透明发光/阴影没有被掩码盖住。优先这样调：
+
+- 先增大 `--ocr-box-padding`
+- 再增大 `--expand`
+- 还不够的话，再把 `--feather` 提高一点
+
+针对类似 `豆包AI生成` 这种白字 + 灰色外发光，建议先试：
+
+```bash
+python cli.py \
+  -i ./assets/avatar1.png \
+  -o ./outputs/avatar1_clean.png \
+  --target-text "豆包AI生成" \
+  --ocr-box-padding 16 \
+  --expand 14 \
+  --feather 4
+```
 
 ## 示例素材
 
