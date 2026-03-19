@@ -1,3 +1,5 @@
+[中文](./README.md) | [English](./README_EN.md)
+
 # remove_watermark
 
 基于开源 AI 图像补全模型 LaMa 的去水印工具。仓库已经移除旧的 OpenCV 规则方案，当前只保留 AIGC 版本。
@@ -8,6 +10,16 @@
 - 用 LaMa 对目标区域做局部 AI 补全
 
 这套方案对草地、墙面、布料、重复纹理、渐变背景这类传统修补容易露馅的场景更稳，也更适合按“指定文字水印”做批量处理。
+
+## 对比图
+
+`avatar1`：
+
+![avatar1 before after](./assets/avatar1_compare.png)
+
+`garden`：
+
+![garden before after](./assets/garden_compare.png)
 
 ## 功能
 
@@ -44,8 +56,11 @@ remove_watermark/
 ├── inpaint_core.py
 ├── requirements.txt
 ├── README.md
+├── README_EN.md
 └── assets/
+    ├── avatar1_compare.png
     ├── avatar1.png
+    ├── garden_compare.png
     └── garden.png
 ```
 
