@@ -1,4 +1,12 @@
-debug_runs/
-__pycache__/
-*.pyc
 .DS_Store
+__pycache__/
+.pytest_cache/
+.venv/
+.conda311/
+outputs/
+batch_inputs/
+batch_outputs/
+batch_masks/
+batch_ocr_preview/
+debug_runs/
+*.pyc

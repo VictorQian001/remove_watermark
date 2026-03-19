@@ -1,95 +1,157 @@
-[中文](./README.md) | [English](./README_EN.md)
+# remove_watermark
 
-# 图片角落覆盖层清理工具
+基于开源 AI 图像补全模型 LaMa 的去水印工具。仓库已经移除旧的 OpenCV 规则方案，当前只保留 AIGC 版本。
 
-用于清理你自有图片中的角落文字、Logo 或其他覆盖层标记。
-更适合纯色、渐变色或接近平滑的背景区域。
-下面的对比图使用的是自制角落覆盖层示例，用来展示推荐场景下的效果。
+当前流程分成两步：
 
-![前后对比](./assets/before_after_case3.png)
+- 用手工掩码、ROI 或 OCR 找到要移除的水印区域
+- 用 LaMa 对目标区域做局部 AI 补全
+
+这套方案对草地、墙面、布料、重复纹理、渐变背景这类传统修补容易露馅的场景更稳，也更适合按“指定文字水印”做批量处理。
 
 ## 功能
 
-- `mode=1`：适合角落里的文字或 Logo 覆盖层
-- `mode=2`：适合全图重复出现的浅色纹理或覆盖层
+- CLI 单图去水印
+- 目录批处理
+- 输入目标水印文字，自动 OCR 找框
+- 导出 OCR 检测框预览图，便于批量验框
+- 本地网页涂抹掩码
+- ROI、手工掩码、OCR 文字匹配三种方式可混用
 
-## 安装依赖
+## 依赖
+
+- 建议 Python `3.11`
+- `simple-lama-inpainting` 当前依赖 `Pillow<10`
+- 建议优先使用带 GPU 的环境；CPU 也能跑，但首次推理更慢
+
+安装：
 
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -r requirements.txt
 ```
 
-## 用法
-
-```bash
-python3 remove_watermark.py -i input.jpg -o output.jpg -m 1
-```
-
-```bash
-python3 remove_watermark.py -i input.jpg -o output.jpg -m 2
-```
-
-## 可选参数
-
-- `--mask-output`：输出识别到的掩码图，便于检查覆盖范围
-- `--corner-ratio`：仅对 `mode=1` 生效，控制四角检测范围，默认 `0.24`
-- `--strength`：控制检测激进程度，默认 `1.0`
-- `--corner`：仅对 `mode=1` 生效，可选 `all/top-left/top-right/bottom-left/bottom-right`
-- `--roi`：仅对 `mode=1` 生效，手动指定区域 `x,y,w,h`，会优先于 `--corner`
+如果你已经像当前仓库一样准备了一个本地 conda 环境，也可以直接用对应环境里的 Python。
 
 ## 项目结构
 
 ```text
-remove_print/
-├── assets/
-│   ├── before_after_case3.png
-│   ├── example_people_clean.png
-│   └── example_people_overlay.png
-├── remove_watermark.py
+remove_watermark/
+├── app.py
+├── cli.py
+├── inpaint_core.py
 ├── requirements.txt
 ├── README.md
-└── README_EN.md
+└── assets/
+    ├── avatar1.png
+    └── garden.png
 ```
 
-- `remove_watermark.py`：命令行入口和主要处理逻辑
-- `assets/`：README 中使用的示例图片资源和 synthetic overlay 案例图
-- `requirements.txt`：运行依赖
-- `README.md` / `README_EN.md`：中文和英文文档
+## CLI
 
-## 示例
-
-角落覆盖层清理：
+1. 用外部掩码图：
 
 ```bash
-python3 remove_watermark.py \
-  -i ./your_image.png \
-  -o ./your_image_clean.png \
-  -m 1 \
-  --corner bottom-right \
+python cli.py \
+  -i ./assets/avatar1.png \
+  -o ./outputs/avatar1_clean.png \
+  --mask ./your_mask.png \
+  --mask-output ./outputs/avatar1_mask.png
+```
+
+2. 用 ROI：
+
+```bash
+python cli.py \
+  -i ./assets/garden.png \
+  -o ./outputs/garden_clean.png \
   --roi 2350,1300,320,130 \
-  --mask-output ./your_image_mask.png
+  --mask-output ./outputs/garden_mask.png
 ```
 
-全图重复覆盖层清理：
+3. 直接输入要移除的文字：
 
 ```bash
-python3 remove_watermark.py \
-  -i ./examples/in.jpg \
-  -o ./examples/out.jpg \
-  -m 2 \
-  --strength 1.2
+python cli.py \
+  -i ./assets/avatar1.png \
+  -o ./outputs/avatar1_clean.png \
+  --target-text "豆包AI生成" \
+  --ocr-preview ./outputs/avatar1_ocr_preview.png \
+  --mask-output ./outputs/avatar1_mask.png
 ```
 
-## 说明
+4. 目录批处理：
 
-- `mode=1` 会优先处理图片角落区域内的浅色文字、Logo 或其他覆盖层标记。
-- `mode=2` 会在全图查找重复出现的浅色纹理或覆盖层，更适合整张图里重复分布的干扰元素。
-- 自动识别不稳时，优先直接给 `--roi x,y,w,h`，这样掩码只会在该矩形内扩张。
-- 建议先用 `--mask-output` 检查掩码是否覆盖完整，再调整 `--strength`。
-- 当前工具更适合纯色、渐变色或接近平滑的背景区域；在复杂纹理背景上，结果可能不稳定。
-- README 中的案例图是 synthetic overlay 示例，不代表对所有真实图片都能达到相同视觉效果。
+```bash
+python cli.py \
+  -i ./batch_inputs \
+  -o ./batch_outputs \
+  --target-text "豆包AI生成" \
+  --ocr-preview ./batch_ocr_preview \
+  --mask-output ./batch_masks
+```
+
+说明：
+
+- 目录模式下，`--mask-output` 表示掩码输出目录
+- 目录模式下，`--ocr-preview` 表示 OCR 预览图输出目录
+- 当前目录模式支持 `png/jpg/jpeg/webp/bmp`
+- 目录模式下不支持单个 `--mask` 文件
+- 某张图没有匹配到目标文字时，会打印 `[WARN]` 并继续处理其他图片
+
+## 常用参数
+
+- `--mask`：外部掩码图，白色区域会被修复
+- `--roi`：矩形区域，格式 `x,y,w,h`
+- `--target-text`：要去除的文字，先 OCR 找框再修复
+- `--text-match-mode`：`contains` 或 `exact`
+- `--ocr-min-score`：OCR 最低置信度，默认 `0.5`
+- `--ocr-preview`：导出 OCR 检测框预览图；匹配框为红色，其他 OCR 框为蓝色
+- `--mask-output`：保存最终送入 AI 的掩码
+- `--expand`：掩码外扩像素，默认 `12`
+- `--feather`：对掩码边缘做轻微放宽，默认 `6`
+- `--mask-threshold`：掩码二值化阈值，默认 `32`
+- `--invert-mask`：如果外部掩码黑白语义相反可打开
+
+## Web UI
+
+启动：
+
+```bash
+python app.py
+```
+
+网页里可以：
+
+- 上传原图
+- 输入目标水印文字，让 OCR 自动找框
+- 直接在图上刷白色掩码
+- 补充填写 ROI
+- 先预览最终掩码，再执行 AI 修复
+
+## 示例素材
+
+- [avatar1.png](./assets/avatar1.png)
+- [garden.png](./assets/garden.png)
+
+## 适用边界
+
+更适合：
+
+- 角落 Logo 或角落文字
+- 半透明或浅色文字水印
+- 背景纹理较复杂的局部去除
+- 批量处理同一类文字水印
+
+仍然不适合：
+
+- 大面积覆盖整张图的重度水印
+- 关键主体被完全遮挡的情况
+- 需要严格还原真实细节的司法或鉴定场景
 
 ## 合规使用
 
-- 仅应处理你本人拥有、授权使用，或有权编辑的图片。
-- 请确保你的使用场景符合图片来源平台、服务条款及适用法律法规。
+- 仅处理你本人拥有、授权使用或明确有权编辑的图片
+- 请确保使用场景符合图片来源平台条款和适用法律法规
