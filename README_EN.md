@@ -4,6 +4,7 @@
 
 This tool is intended for cleaning up corner text, logos, or other overlays in images you own or are authorized to edit.
 It works best on solid-color, gradient, or near-smooth background areas.
+The comparison image below uses a synthetic corner overlay example to show the recommended use case.
 
 ![Before and after](./assets/before_after_case3.png)
 
@@ -41,7 +42,9 @@ python3 remove_watermark.py -i input.jpg -o output.jpg -m 2
 ```text
 remove_print/
 ├── assets/
-│   └── before_after_case3.png
+│   ├── before_after_case3.png
+│   ├── example_people_clean.png
+│   └── example_people_overlay.png
 ├── remove_watermark.py
 ├── requirements.txt
 ├── README.md
@@ -49,7 +52,7 @@ remove_print/
 ```
 
 - `remove_watermark.py`: CLI entrypoint and main processing logic
-- `assets/`: sample images used by the README
+- `assets/`: sample images and synthetic overlay demo assets used by the README
 - `requirements.txt`: runtime dependencies
 - `README.md` / `README_EN.md`: Chinese and English documentation
 
@@ -59,12 +62,12 @@ Corner overlay cleanup:
 
 ```bash
 python3 remove_watermark.py \
-  -i ./people.png \
-  -o ./people_clean.png \
+  -i ./your_image.png \
+  -o ./your_image_clean.png \
   -m 1 \
   --corner bottom-right \
   --roi 2350,1300,320,130 \
-  --mask-output ./people_mask.png
+  --mask-output ./your_image_mask.png
 ```
 
 Repeated overlay cleanup:
@@ -84,6 +87,7 @@ python3 remove_watermark.py \
 - If auto-detection is unstable, provide `--roi x,y,w,h` to constrain the target area.
 - Use `--mask-output` first when tuning parameters, then adjust `--strength`.
 - The current workflow is best suited to solid-color, gradient, or near-smooth background areas; results on highly textured backgrounds may be less stable.
+- The README example is a synthetic overlay demo and should not be interpreted as a guarantee for all real-world images.
 
 ## Compliance
 

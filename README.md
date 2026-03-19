@@ -4,6 +4,7 @@
 
 用于清理你自有图片中的角落文字、Logo 或其他覆盖层标记。
 更适合纯色、渐变色或接近平滑的背景区域。
+下面的对比图使用的是自制角落覆盖层示例，用来展示推荐场景下的效果。
 
 ![前后对比](./assets/before_after_case3.png)
 
@@ -41,7 +42,9 @@ python3 remove_watermark.py -i input.jpg -o output.jpg -m 2
 ```text
 remove_print/
 ├── assets/
-│   └── before_after_case3.png
+│   ├── before_after_case3.png
+│   ├── example_people_clean.png
+│   └── example_people_overlay.png
 ├── remove_watermark.py
 ├── requirements.txt
 ├── README.md
@@ -49,7 +52,7 @@ remove_print/
 ```
 
 - `remove_watermark.py`：命令行入口和主要处理逻辑
-- `assets/`：README 中使用的示例图片资源
+- `assets/`：README 中使用的示例图片资源和 synthetic overlay 案例图
 - `requirements.txt`：运行依赖
 - `README.md` / `README_EN.md`：中文和英文文档
 
@@ -59,12 +62,12 @@ remove_print/
 
 ```bash
 python3 remove_watermark.py \
-  -i ./people.png \
-  -o ./people_clean.png \
+  -i ./your_image.png \
+  -o ./your_image_clean.png \
   -m 1 \
   --corner bottom-right \
   --roi 2350,1300,320,130 \
-  --mask-output ./people_mask.png
+  --mask-output ./your_image_mask.png
 ```
 
 全图重复覆盖层清理：
@@ -84,6 +87,7 @@ python3 remove_watermark.py \
 - 自动识别不稳时，优先直接给 `--roi x,y,w,h`，这样掩码只会在该矩形内扩张。
 - 建议先用 `--mask-output` 检查掩码是否覆盖完整，再调整 `--strength`。
 - 当前工具更适合纯色、渐变色或接近平滑的背景区域；在复杂纹理背景上，结果可能不稳定。
+- README 中的案例图是 synthetic overlay 示例，不代表对所有真实图片都能达到相同视觉效果。
 
 ## 合规使用
 
