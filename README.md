@@ -1,8 +1,10 @@
+[中文](./README.md) | [English](./README_EN.md)
+
 # 图片角落覆盖层清理工具
 
 用于清理你自有图片中的角落文字、Logo 或其他覆盖层标记。
 
-For the English version, see [README_EN.md](./README_EN.md).
+![前后对比](./assets/before_after_case3.png)
 
 ## 功能
 
@@ -32,6 +34,23 @@ python3 remove_watermark.py -i input.jpg -o output.jpg -m 2
 - `--strength`：控制检测激进程度，默认 `1.0`
 - `--corner`：仅对 `mode=1` 生效，可选 `all/top-left/top-right/bottom-left/bottom-right`
 - `--roi`：仅对 `mode=1` 生效，手动指定区域 `x,y,w,h`，会优先于 `--corner`
+
+## 项目结构
+
+```text
+remove_print/
+├── assets/
+│   └── before_after_case3.png
+├── remove_watermark.py
+├── requirements.txt
+├── README.md
+└── README_EN.md
+```
+
+- `remove_watermark.py`：命令行入口和主要处理逻辑
+- `assets/`：README 中使用的示例图片资源
+- `requirements.txt`：运行依赖
+- `README.md` / `README_EN.md`：中文和英文文档
 
 ## 示例
 

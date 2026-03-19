@@ -1,8 +1,10 @@
+[中文](./README.md) | [English](./README_EN.md)
+
 # Corner Overlay Cleanup Tool
 
 This tool is intended for cleaning up corner text, logos, or other overlays in images you own or are authorized to edit.
 
-中文版请见 [README.md](./README.md)。
+![Before and after](./assets/before_after_case3.png)
 
 ## Features
 
@@ -32,6 +34,23 @@ python3 remove_watermark.py -i input.jpg -o output.jpg -m 2
 - `--strength`: detection aggressiveness, default `1.0`
 - `--corner`: only for `mode=1`, choose from `all/top-left/top-right/bottom-left/bottom-right`
 - `--roi`: only for `mode=1`, manually specify a target region as `x,y,w,h`; takes priority over `--corner`
+
+## Project Structure
+
+```text
+remove_print/
+├── assets/
+│   └── before_after_case3.png
+├── remove_watermark.py
+├── requirements.txt
+├── README.md
+└── README_EN.md
+```
+
+- `remove_watermark.py`: CLI entrypoint and main processing logic
+- `assets/`: sample images used by the README
+- `requirements.txt`: runtime dependencies
+- `README.md` / `README_EN.md`: Chinese and English documentation
 
 ## Examples
 
